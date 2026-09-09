@@ -213,6 +213,133 @@ class IBMAdapter:
         )
 
 
+
+
+class IonQAdapter:
+    """
+    Parses an IonQ Aria-style calibration JSON into a BackendSnapshot.
+
+    IonQ uses trapped-ion qubits — fundamentally different from superconducting:
+      - All-to-all connectivity: every qubit pair can interact natively via
+        the Molmer-Sorensen (MS) entangling gate. No routing cost for small circuits.
+      - T1/T2 in seconds (not us). Coherence times 3-6 orders of magnitude
+        longer than superconducting devices.
+      - SPAM error (state preparation and measurement) replaces readout_error.
+      - Native gates: GPI, GPI2, MS.
+    """
+
+    @staticmethod
+    def load(path) -> BackendSnapshot:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return IonQAdapter._parse(data)
+
+    @staticmethod
+    def _parse(data: dict) -> BackendSnapshot:
+        """
+        Handles two formats:
+          Real API  — response from /characterizations/backends/{backend}/current
+                      has aggregate fidelity only (no per-qubit breakdown)
+          Fake data — our synthetic file with per_qubit list (used as placeholder)
+
+        IonQ's public API does not expose per-qubit SPAM/T1/T2.
+        For real data, all qubits receive the aggregate backend value.
+        Qubit-to-qubit variation is much smaller for trapped-ion than
+        superconducting systems, so aggregate stats are meaningful.
+        """
+        real_api = "fidelity" in data and "timing" in data
+
+        if real_api:
+            # ── Real API format ───────────────────────────────────────────────
+            fid        = data["fidelity"]
+            spam_med   = fid["spam"]["median"]
+            fid_1q     = fid.get("1q", {}).get("median")
+            fid_2q     = fid.get("2q", {}).get("median")
+
+            # Composite hardware quality:
+            #   SPAM fidelity captures readout accuracy.
+            #   1Q/2Q gate fidelity captures how cleanly the backend executes gates.
+            #   For IonQ real data all three are available, so we blend them.
+            #   Weights: 50% SPAM + 30% 1Q + 20% 2Q.
+            if fid_1q is not None and fid_2q is not None:
+                composite = round(0.5 * spam_med + 0.3 * fid_1q + 0.2 * fid_2q, 6)
+            else:
+                composite = spam_med
+
+            t1_s  = data["timing"].get("t1")
+            t2_s  = data["timing"].get("t2")
+            t1_us = round(t1_s * 1e6, 0) if t1_s else None
+            t2_us = round(t2_s * 1e6, 0) if t2_s else None
+            n     = data["qubits"]
+
+            qubits = [
+                QubitSnapshot(
+                    qubit_id=str(i),
+                    readout_fidelity=composite,
+                    readout_error=round(1.0 - composite, 6),
+                    t1_us=t1_us,
+                    t2_us=t2_us,
+                )
+                for i in range(n)
+            ]
+
+            raw_connectivity = data.get("connectivity", [])
+            connectivity = [
+                (str(pair[0]), str(pair[1]))
+                for pair in raw_connectivity
+            ] if raw_connectivity else [
+                (str(i), str(j)) for i in range(n) for j in range(i+1, n)
+            ]
+
+            backend_name = data.get("backend", "ionq_backend").replace("qpu.", "ionq_").replace("-", "_")
+            timestamp    = data.get("date") or data.get("_fetched_at")
+            system       = "Aria" if "aria" in data.get("backend", "") else "Forte"
+            meta_fidelity = {
+                "spam":   round(spam_med, 4),
+                "1q":     round(fid_1q, 4) if fid_1q else None,
+                "2q":     round(fid_2q, 4) if fid_2q else None,
+                "composite": composite,
+            }
+
+        else:
+            # ── Fake/synthetic format (per_qubit list) ────────────────────────
+            qubits = []
+            for q in data["per_qubit"]:
+                spam_err = q.get("spam_error", 0.0)
+                qubits.append(QubitSnapshot(
+                    qubit_id=str(q["qubit"]),
+                    readout_fidelity=round(1.0 - spam_err, 6),
+                    readout_error=round(spam_err, 6),
+                    t1_us=q.get("t1_us"),
+                    t2_us=q.get("t2_us"),
+                ))
+
+            n            = len(qubits)
+            connectivity = [(str(i), str(j)) for i in range(n) for j in range(i+1, n)]
+            backend_name = data.get("backend_name", "ionq_aria_1")
+            timestamp    = data.get("calibration_time")
+            system       = data.get("system", "Aria")
+            meta_fidelity = None
+
+        metadata = {
+            "topology": "all_to_all",
+            "system":   system,
+            "source":   "real_api" if real_api else "synthetic",
+        }
+        if meta_fidelity:
+            metadata["fidelity"] = meta_fidelity
+
+        return BackendSnapshot(
+            backend_name=backend_name,
+            provider="IonQ",
+            timestamp=str(timestamp) if timestamp else None,
+            num_qubits=len(qubits),
+            qubits=qubits,
+            connectivity=connectivity,
+            native_gates=data.get("native_gates", ["gpi", "gpi2", "ms"]),
+            metadata=metadata,
+        )
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. FEATURE EXTRACTION
 # ══════════════════════════════════════════════════════════════════════════════
@@ -297,6 +424,10 @@ def print_health_summary(snapshot: BackendSnapshot) -> None:
     print(f"  Best qubit     : {s['best_qubit']}")
     print(f"  Worst qubit    : {s['worst_qubit']}")
     print(f"  T1/T2 available: {s['t1_available']}")
+    fid = snapshot.metadata.get("fidelity")
+    if fid:
+        print(f"  Gate fidelity  : 1Q={fid['1q']}  2Q={fid['2q']}  SPAM={fid['spam']}")
+        print(f"  Composite score: {fid['composite']:.4f}  (0.5×SPAM + 0.3×1Q + 0.2×2Q)")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -590,12 +721,17 @@ def plot_backend_health(
     """
     G = nx.Graph()
     G.add_nodes_from(q.qubit_id for q in snapshot.qubits)
-    G.add_edges_from(snapshot.connectivity)
 
-    health  = per_qubit_health(snapshot)
-    colors  = [health.get(n, 0.5) for n in G.nodes()]
+    all_to_all = snapshot.metadata.get("topology") == "all_to_all"
 
-    # Narrow the color range to the data range so differences are visible
+    # For all-to-all (IonQ): circular layout, skip drawing 300 edges.
+    # For other backends: draw actual connectivity graph.
+    if not all_to_all:
+        G.add_edges_from(snapshot.connectivity)
+
+    health = per_qubit_health(snapshot)
+    colors = [health.get(n, 0.5) for n in G.nodes()]
+
     vmin = min(colors) - 0.002
     vmax = max(colors) + 0.002
 
@@ -605,7 +741,11 @@ def plot_backend_health(
     else:
         fig = ax.get_figure()
 
-    pos = nx.spring_layout(G, seed=42, k=2.0, iterations=80)
+    pos = (
+        nx.circular_layout(G)
+        if all_to_all
+        else nx.spring_layout(G, seed=42, k=2.0, iterations=80)
+    )
 
     nodes = nx.draw_networkx_nodes(
         G, pos,
@@ -622,8 +762,9 @@ def plot_backend_health(
     cbar.set_label("Qubit Health Score", fontsize=9)
 
     h = backend_health_score(snapshot)
+    topo_note = "  |  All-to-all" if all_to_all else ""
     ax.set_title(
-        f"{snapshot.backend_name}  ({snapshot.provider})\n"
+        f"{snapshot.backend_name}  ({snapshot.provider}){topo_note}\n"
         f"Backend health: {h:.4f}  |  Qubits: {snapshot.num_qubits}",
         fontsize=11,
     )
@@ -765,12 +906,23 @@ def explain_ranking(results: list[dict]) -> str:
                 "if submission costs allow."
             )
 
+    # Show gate fidelity breakdown for IonQ backends if available
+    for r in results:
+        fid = r["snapshot"].metadata.get("fidelity")
+        if fid and fid.get("1q") is not None:
+            lines.append(
+                f"\n  {r['backend']} gate fidelity breakdown:\n"
+                f"    SPAM: {fid['spam']}  |  1Q: {fid['1q']}  |  2Q: {fid['2q']}\n"
+                f"    Composite: {fid['composite']:.4f}  (0.5×SPAM + 0.3×1Q + 0.2×2Q)"
+            )
+
     lines.append(
         "\n  ─────────────────────────────────────────────────────────\n"
-        "  This scoring uses readout data + coherence estimates only.\n"
-        "  The QAIP production layer adds: gate fidelity per edge,\n"
-        "  calibration drift trends, topology-aware routing cost,\n"
-        "  circuit-family-specific weights, and uncertainty bounds.\n"
+        "  IonQ scores use real API calibration: SPAM + 1Q + 2Q gate\n"
+        "  fidelity blended into a composite hardware quality score.\n"
+        "  The QAIP production layer adds: calibration drift trends,\n"
+        "  topology-aware routing cost, circuit-family-specific weights,\n"
+        "  and uncertainty bounds.\n"
         "  See github.com/[your-org]/QAIP for the full system."
     )
 

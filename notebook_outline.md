@@ -1,16 +1,19 @@
-# Notebook Outline — Calibration-Aware Hardware Ranking
+# Notebook Outline  Calibration-Aware Hardware Ranking
+
 ## qaip-hardware-ranking | Qollab Track 1
 
 Cell-by-cell plan. Each cell has a type (Markdown/Code), a title, a ~1-sentence purpose, and the key content. Write the actual `.ipynb` from this outline.
 
 ---
 
-## Part 0 — Setup (hidden from readers on Qollab; runs automatically)
+## Part 0 - Setup (hidden from readers on Qollab; runs automatically)
 
 ### Cell 0.1 · Code · Install dependencies
+
 ```
 !pip install qiskit qiskit-aer matplotlib networkx numpy -q
 ```
+
 Qollab runs this before the reader sees any output. Keep quiet (`-q`).
 
 ---
@@ -22,6 +25,7 @@ Qollab runs this before the reader sees any output. Keep quiet (`-q`).
 **Title:** Calibration-Aware Hardware Ranking for Quantum Circuits
 
 **Content:**
+
 > Running a quantum circuit is not like running a classical program. Different quantum backends have different calibration states: qubits vary in readout fidelity, coherence time, and gate error — and those metrics change daily. Choosing the wrong backend can cost you fidelity before you even consider circuit compilation.
 >
 > This notebook demonstrates **calibration-aware backend ranking**: a systematic way to select the best available backend for your circuit, using real calibration data rather than static hardware specs.
@@ -93,6 +97,7 @@ print(f"\nFirst qubit: {iqm.qubits[0]}")
 ```
 
 **Expected output:**
+
 ```
 Loaded: IQM Sirius (IQM) — 16 qubits
 Timestamp: 2026-07-06T05:53:44.787841
@@ -110,6 +115,7 @@ print(f"\nFirst qubit: {ibm.qubits[0]}")
 ```
 
 **Expected output:**
+
 ```
 Loaded: ibm_kolkata_fake (IBM) — 27 qubits
 
@@ -263,6 +269,7 @@ plot_backends_side_by_side([iqm, ibm])
 ```
 
 **What to look for:**
+
 - IQM: most qubits are green (high SSRO), a few showing modest degradation. Star topology via central coupler.
 - IBM: wider spread from green to yellow (T1/T2 variation). Heavy-hex connectivity pattern.
 
@@ -404,6 +411,7 @@ If you found this notebook useful, star the repo or open an issue — feedback
 is welcome.
 
 → [github.com/[your-org]/QAIP](https://github.com/[your-org]/QAIP)
+
 ```
 
 ---
@@ -420,3 +428,4 @@ is welcome.
 - [ ] "About QAIP" section links to real GitHub URLs
 - [ ] MIT license header in `utils.py`
 - [ ] Notebook saved with output cells populated (Qollab reviewers see pre-run output)
+```
