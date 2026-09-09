@@ -1,0 +1,24 @@
+# qaip-hardware-ranking — notebook dependencies
+# Pin ranges that work together; tested with Python 3.10–3.12.
+
+# Quantum framework (circuit building only; no backend credentials required
+# to run ranking and visualization cells)
+qiskit>=1.0,<2.0
+
+# Optional: noiseless simulation for the hardware comparison cell
+qiskit-aer>=0.14
+
+# Scientific / numeric
+numpy>=1.24
+matplotlib>=3.7
+networkx>=3.2
+
+# Notebook runtime
+jupyter>=1.0
+ipykernel>=6.0
+
+# Notes on what is NOT here:
+#   - qiskit-ibm-runtime : not needed unless running the IBM live hardware cell
+#   - iqm-client         : not needed; calibration is loaded from local JSON
+#   - qiskit-ionq        : needed for the IonQ hardware run cell (pending provider confirmation)
+#   - qaip               : intentionally excluded — this notebook does not import the QAIP package

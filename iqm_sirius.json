@@ -1,0 +1,584 @@
+{
+  "backend_name": "IQM Sirius",
+  "provider": "IQM",
+  "topology": "star_16q",
+  "created_timestamp": "2026-07-06T05:53:45.249682Z",
+  "observations": [
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB1.fidelity",
+      "value": 0.98195,
+      "uncertainty": 0.0009294281074940662,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB1.error_0_to_1",
+      "value": 0.0064,
+      "uncertainty": 0.0008019445245152561,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB1.error_1_to_0",
+      "value": 0.0297,
+      "uncertainty": 0.001676970902430929,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB2.fidelity",
+      "value": 0.9823,
+      "uncertainty": 0.0009307420453595076,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB2.error_0_to_1",
+      "value": 0.0081,
+      "uncertainty": 0.0008915413975806171,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB2.error_1_to_0",
+      "value": 0.0273,
+      "uncertainty": 0.0016340982089213603,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB3.fidelity",
+      "value": 0.9862,
+      "uncertainty": 0.0008201572775388881,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB3.error_0_to_1",
+      "value": 0.0088,
+      "uncertainty": 0.0009356133763473028,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB3.error_1_to_0",
+      "value": 0.0188,
+      "uncertainty": 0.0013473156458677393,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB4.fidelity",
+      "value": 0.9611,
+      "uncertainty": 0.0013511877885031384,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB4.error_0_to_1",
+      "value": 0.0212,
+      "uncertainty": 0.0014555379650149974,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB4.error_1_to_0",
+      "value": 0.0566,
+      "uncertainty": 0.0022768932762867932,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB5.fidelity",
+      "value": 0.98815,
+      "uncertainty": 0.000758382434857243,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB5.error_0_to_1",
+      "value": 0.0054,
+      "uncertainty": 0.0007267589421534489,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB5.error_1_to_0",
+      "value": 0.0183,
+      "uncertainty": 0.0013313140538580676,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB8.fidelity",
+      "value": 0.98075,
+      "uncertainty": 0.0009498707701577096,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB8.error_0_to_1",
+      "value": 0.0103,
+      "uncertainty": 0.0010133229297711564,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB8.error_1_to_0",
+      "value": 0.0282,
+      "uncertainty": 0.001606920831901809,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB9.fidelity",
+      "value": 0.9845,
+      "uncertainty": 0.0008715592413599893,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB9.error_0_to_1",
+      "value": 0.008,
+      "uncertainty": 0.0008821628139975069,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB9.error_1_to_0",
+      "value": 0.023,
+      "uncertainty": 0.001503413055151511,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB10.fidelity",
+      "value": 0.9836,
+      "uncertainty": 0.000891735573138135,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB10.error_0_to_1",
+      "value": 0.0072,
+      "uncertainty": 0.0008547136128552066,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB10.error_1_to_0",
+      "value": 0.0256,
+      "uncertainty": 0.001565322321312768,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB11.fidelity",
+      "value": 0.98105,
+      "uncertainty": 0.0009681370636433664,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB11.error_0_to_1",
+      "value": 0.0108,
+      "uncertainty": 0.0010263279039371383,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB11.error_1_to_0",
+      "value": 0.0271,
+      "uncertainty": 0.001641891753313841,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB13.fidelity",
+      "value": 0.9877,
+      "uncertainty": 0.000784293649534408,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB13.error_0_to_1",
+      "value": 0.0094,
+      "uncertainty": 0.0009817800794475308,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB13.error_1_to_0",
+      "value": 0.0152,
+      "uncertainty": 0.0012233454092773649,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB15.fidelity",
+      "value": 0.98555,
+      "uncertainty": 0.0008473906932460379,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB15.error_0_to_1",
+      "value": 0.0087,
+      "uncertainty": 0.0009276940252044312,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB15.error_1_to_0",
+      "value": 0.0202,
+      "uncertainty": 0.0014183327337405716,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB17.fidelity",
+      "value": 0.9884,
+      "uncertainty": 0.0007423468843472036,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB17.error_0_to_1",
+      "value": 0.0036,
+      "uncertainty": 0.0006017190277862252,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB17.error_1_to_0",
+      "value": 0.0196,
+      "uncertainty": 0.0013572950299769028,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB19.fidelity",
+      "value": 0.9811,
+      "uncertainty": 0.0009593639067111086,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB19.error_0_to_1",
+      "value": 0.0071,
+      "uncertainty": 0.000843704634573024,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB19.error_1_to_0",
+      "value": 0.0307,
+      "uncertainty": 0.0017232756342500763,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB20.fidelity",
+      "value": 0.9827,
+      "uncertainty": 0.0009137928729750516,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB20.error_0_to_1",
+      "value": 0.0105,
+      "uncertainty": 0.001028911112973322,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB20.error_1_to_0",
+      "value": 0.0241,
+      "uncertainty": 0.0015104342357083918,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB21.fidelity",
+      "value": 0.9828,
+      "uncertainty": 0.0009198217794225146,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB21.error_0_to_1",
+      "value": 0.0132,
+      "uncertainty": 0.0011451777083055711,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB21.error_1_to_0",
+      "value": 0.0212,
+      "uncertainty": 0.0014397417962954346,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB23.fidelity",
+      "value": 0.98215,
+      "uncertainty": 0.0009424933981201144,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB23.error_0_to_1",
+      "value": 0.0139,
+      "uncertainty": 0.0011714304855176,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure.constant.QB23.error_1_to_0",
+      "value": 0.0218,
+      "uncertainty": 0.0014767958015920826,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.error_0_to_1",
+      "value": 0.0065,
+      "uncertainty": 0.000787381425993781,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB21.error_0_to_1",
+      "value": 0.012,
+      "uncertainty": 0.001078079584260828,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB23.fidelity",
+      "value": 0.9746,
+      "uncertainty": 0.0011071631131409673,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.error_1_to_0",
+      "value": 0.0224,
+      "uncertainty": 0.0014848230751170334,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.error_1_to_0",
+      "value": 0.021,
+      "uncertainty": 0.0014478540346319444,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.error_0_to_1",
+      "value": 0.0087,
+      "uncertainty": 0.000940204862569855,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.fidelity",
+      "value": 0.9888,
+      "uncertainty": 0.0007397531080029339,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.fidelity",
+      "value": 0.9808,
+      "uncertainty": 0.0009667725341051025,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.fidelity",
+      "value": 0.984,
+      "uncertainty": 0.0008765575238397073,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.error_0_to_1",
+      "value": 0.0057,
+      "uncertainty": 0.0007598036038345699,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.error_1_to_0",
+      "value": 0.0294,
+      "uncertainty": 0.001673541752212954,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.error_1_to_0",
+      "value": 0.0212,
+      "uncertainty": 0.001439972657518192,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.error_1_to_0",
+      "value": 0.0561,
+      "uncertainty": 0.0022999424378883936,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.fidelity",
+      "value": 0.98535,
+      "uncertainty": 0.0008407537198252536,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.error_1_to_0",
+      "value": 0.0229,
+      "uncertainty": 0.0015026946142180724,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.error_0_to_1",
+      "value": 0.0068,
+      "uncertainty": 0.0008184353538307103,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.error_1_to_0",
+      "value": 0.0233,
+      "uncertainty": 0.0014846194328513949,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.error_0_to_1",
+      "value": 0.0093,
+      "uncertainty": 0.0009748196009518888,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.fidelity",
+      "value": 0.9591,
+      "uncertainty": 0.0013973989602114358,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.error_0_to_1",
+      "value": 0.0087,
+      "uncertainty": 0.000928256430088152,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB21.error_1_to_0",
+      "value": 0.017,
+      "uncertainty": 0.001294647464601852,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.error_0_to_1",
+      "value": 0.0097,
+      "uncertainty": 0.0009711745134629512,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.error_1_to_0",
+      "value": 0.0183,
+      "uncertainty": 0.001348769851234822,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.fidelity",
+      "value": 0.98815,
+      "uncertainty": 0.0007638453871694194,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.fidelity",
+      "value": 0.98245,
+      "uncertainty": 0.000918972729845669,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.error_0_to_1",
+      "value": 0.0065,
+      "uncertainty": 0.0007844072574880985,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.error_0_to_1",
+      "value": 0.0074,
+      "uncertainty": 0.0008433063023599432,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.error_0_to_1",
+      "value": 0.0037,
+      "uncertainty": 0.0006006283523111442,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.error_0_to_1",
+      "value": 0.0257,
+      "uncertainty": 0.0015878161727353704,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.fidelity",
+      "value": 0.98605,
+      "uncertainty": 0.000834665877941587,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.fidelity",
+      "value": 0.98055,
+      "uncertainty": 0.0009665700659031404,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.error_0_to_1",
+      "value": 0.0101,
+      "uncertainty": 0.0009853961436904449,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.fidelity",
+      "value": 0.98555,
+      "uncertainty": 0.0008403375920426272,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB23.error_1_to_0",
+      "value": 0.0241,
+      "uncertainty": 0.0015377017135972744,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.error_1_to_0",
+      "value": 0.0219,
+      "uncertainty": 0.0014547514392500198,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.error_1_to_0",
+      "value": 0.0292,
+      "uncertainty": 0.0016714816282568,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.fidelity",
+      "value": 0.9835,
+      "uncertainty": 0.0008984843715390938,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.error_0_to_1",
+      "value": 0.0068,
+      "uncertainty": 0.0008236003824671284,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.error_1_to_0",
+      "value": 0.0169,
+      "uncertainty": 0.0012899622760375595,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.fidelity",
+      "value": 0.98765,
+      "uncertainty": 0.00078374672618136,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB21.fidelity",
+      "value": 0.9855,
+      "uncertainty": 0.0008423727867755468,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.fidelity",
+      "value": 0.98505,
+      "uncertainty": 0.000856618534471442,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB23.error_0_to_1",
+      "value": 0.0267,
+      "uncertainty": 0.0015933342638630476,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.error_1_to_0",
+      "value": 0.0159,
+      "uncertainty": 0.0012544496393239552,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.error_0_to_1",
+      "value": 0.0087,
+      "uncertainty": 0.0009323719804884742,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.fidelity",
+      "value": 0.98745,
+      "uncertainty": 0.0007901736678730828,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.error_1_to_0",
+      "value": 0.0291,
+      "uncertainty": 0.001669827319335747,
+      "unit": ""
+    },
+    {
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.error_1_to_0",
+      "value": 0.0192,
+      "uncertainty": 0.0013793778770155771,
+      "unit": ""
+    }
+  ]
+}
