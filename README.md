@@ -1,31 +1,27 @@
 # Qaip-Hardware-Ranking
 
-**Calibration-aware backend ranking for quantum circuits**
+# Calibration-Aware Hardware Ranking for Quantum Circuits
 
-A self-contained, pedagogical implementation of one primitive from [QAIP](https://github.com/[your-org]/QAIP): ranking available quantum backends for a given circuit, using live calibration data rather than static hardware specs.
+A self-contained Qollab notebook that shows how to pick the right quantum backend for your circuit using live calibration data — not just qubit counts or static specs.
 
-Published as a Qollab notebook (Track 1). MIT-licensed.
+MIT-licensed. Runs one-click on [qollab.xyz](https://qollab.xyz).
 
 ---
 
-## What this notebook shows
+## What this notebook teaches
 
-Given a quantum circuit and calibration snapshots for two or more backends, this notebook:
+Different quantum backends have different calibration states every day. Readout fidelity, gate error, and coherence times all vary — and picking the wrong backend costs you fidelity before compilation even starts.
 
-1. **Loads and normalizes** calibration data from IQM and IBM backends using a provider-agnostic adapter pattern
-2. **Extracts per-qubit health scores** from readout fidelity, T1, and T2 metrics
-3. **Scores and ranks** backends using a transparent, readable scoring function (~50 lines, no learned parameters)
-4. **Visualizes** the hardware topology with per-qubit health overlaid as color
-5. **Generates a plain-language reasoning trace** explaining why backend A ranked above backend B for this specific circuit
-6. **Runs the top-ranked circuit** on real hardware through the Qollab playground runner
+This notebook walks through one complete idea end to end:
 
-Three worked example circuits (Bell, GHZ(5), QFT(4)) and a "bring your own circuit" section are included.
+1. **Load calibration data** from IQM, IBM, and IonQ backends using a provider-agnostic adapter pattern
+2. **Compute per-qubit health scores** from readout fidelity, gate fidelity, and coherence metrics
+3. **Score and rank backends** for a given circuit using a transparent scoring formula
+4. **Visualize** the hardware topology with per-qubit health as color
+5. **Explain the ranking** in plain language — which backend won and why
+6. **Run the top-ranked circuit** on real IonQ hardware through the Qollab playground
 
-## What this notebook does NOT show
-
-Routing estimation, qubit mapping optimization, execution strategy selection, confidence intervals, multi-provider authentication, or the full `QuantumAdvisor` API. Those layers are part of QAIP and are outside the scope of this focused primitive.
-
-> This notebook demonstrates calibration-aware backend ranking — one primitive in a larger execution planning stack ([QAIP](https://github.com/[your-org]/QAIP)) that also handles qubit mapping, routing estimation, strategy selection, and execution optimization. Those layers are out of scope here; this notebook focuses on ranking done well, so it can serve as a building block for anyone working on hardware-adaptive quantum systems.
+Three worked circuits (Bell, GHZ(5), QFT(4)) and a bring-your-own-circuit section are included.
 
 ---
 
@@ -33,14 +29,18 @@ Routing estimation, qubit mapping optimization, execution strategy selection, co
 
 ```
 qaip-hardware-ranking/
-├── notebook.ipynb          # the Qollab notebook (one-click runnable)
-├── utils.py                # clean self-contained implementation (~550 lines)
+├── notebook.ipynb              # Qollab notebook — one-click runnable
+├── utils.py                    # self-contained implementation (~600 lines)
 ├── requirements.txt
 ├── data/
-│   ├── iqm_sirius.json     # IQM Sirius SSRO calibration snapshot
-│   └── ibm_kolkata_fake.json  # synthetic IBM 27q calibration (pedagogical)
-├── outputs/                # figures saved by the notebook
-├── LICENSE                 # MIT
+│   ├── iqm_sirius.json         # real IQM Sirius SSRO calibration
+│   ├── ibm_kolkata_fake.json   # synthetic IBM 27q calibration
+│   ├── ionq_aria_1.json        # real IonQ Aria 1 calibration
+│   ├── ionq_aria_2.json        # real IonQ Aria 2 calibration
+│   └── ionq_forte_1.json       # real IonQ Forte 1 calibration
+├── scripts/
+│   └── fetch_ionq_calibration.py   # pulls fresh IonQ calibration from API
+├── LICENSE
 └── README.md
 ```
 
@@ -51,20 +51,23 @@ pip install -r requirements.txt
 jupyter notebook notebook.ipynb
 ```
 
-No API credentials needed to run ranking and visualization.
-The hardware execution cell (final section) requires a Qollab account or compatible provider credentials.
+No credentials needed for ranking and visualization cells. The hardware run cell uses your Qollab account.
+
+---
 
 ## Quickstart
 
 ```python
-from utils import IQMAdapter, IBMAdapter, rank_backends, print_ranking_table, explain_ranking
+from utils import IQMAdapter, IBMAdapter, IonQAdapter
+from utils import rank_backends, print_ranking_table, explain_ranking
 from qiskit import QuantumCircuit
 
 # Load calibration snapshots
-iqm = IQMAdapter.load("data/iqm_sirius.json")
-ibm = IBMAdapter.load("data/ibm_kolkata_fake.json")
+iqm   = IQMAdapter.load("data/iqm_sirius.json")
+ibm   = IBMAdapter.load("data/ibm_kolkata_fake.json")
+aria2 = IonQAdapter.load("data/ionq_aria_2.json")
 
-# Define a circuit
+# Define your circuit
 qc = QuantumCircuit(4)
 qc.h(0)
 qc.cx(0, 1)
@@ -73,7 +76,7 @@ qc.cx(2, 3)
 qc.measure_all()
 
 # Rank and explain
-results = rank_backends([iqm, ibm], qc)
+results = rank_backends([iqm, ibm, aria2], qc)
 print_ranking_table(results)
 print(explain_ranking(results))
 ```
@@ -88,40 +91,19 @@ score = 0.70 × readout_quality
       + 0.10 × capacity_fit
 ```
 
-**readout_quality** — mean health of the N best qubits (N = circuit width). Health is derived from SSRO fidelity for IQM and from readout_error + T1/T2 for IBM. Always computable; the primary differentiator for shallow NISQ circuits.
+**readout_quality** — mean health of the N best qubits (N = circuit width). For IQM: derived from SSRO fidelity. For IBM: readout error + T1/T2. For IonQ: composite of SPAM, 1Q gate fidelity, and 2Q gate fidelity.
 
-**coherence_margin** — T1 relative to estimated circuit runtime. Computed when T1 data is available (IBM). For backends without T1 in the snapshot (IQM), a comfortable value is assumed for shallow circuits and noted in the reasoning trace.
+**coherence_margin** — T1 relative to estimated circuit runtime. Backends with longer coherence times score higher for deeper circuits.
 
-**capacity_fit** — 1.0 if the backend has enough physical qubits for the circuit; 0.0 otherwise. Hard fail.
+**capacity_fit** — 1.0 if the backend has enough qubits; 0.0 if not. Hard fail.
 
-The weights are named constants in `utils.py` (`DEFAULT_WEIGHTS`) and are easy to adjust. No learned parameters.
-
----
-
-## Key design decisions
-
-**No `import qaip`** — this is a clean reimplementation, not a wrapper. The QAIP product and this notebook can evolve independently.
-
-**Adapter pattern** — two providers, two adapters (`IQMAdapter`, `IBMAdapter`). Adding a third provider means adding a third adapter; the scoring code is untouched.
-
-**Transparent formula** — the scoring function is readable in its entirety in `utils.py`. Every term has a docstring explaining its purpose and derivation.
-
-**Pedagogical reasoning trace** — `explain_ranking()` generates rule-based plain-language output from the scoring breakdown. No language model involved.
+Weights are named constants (`DEFAULT_WEIGHTS` in `utils.py`) — easy to adjust. No learned parameters.
 
 ---
 
 ## About QAIP
 
-This notebook is one primitive in QAIP (Quantum-Aware Intelligence and Planning), an execution intelligence layer for quantum circuits that handles:
-
-- Calibration-aware backend ranking ← *you are here*
-- Topology-aware qubit mapping
-- Routing cost estimation (MOVE / SWAP strategy selection)
-- Execution plan optimization
-- Structured reasoning reports with confidence bounds
-- Multi-provider provider adapters with live calibration ingestion
-
-QAIP is under active development. For more: **[github.com/[your-org]/QAIP]**
+This notebook is part of a larger project, [QAIP](https://github.com/[your-org]/QAIP), which builds on top of this ranking primitive to also handle qubit mapping, routing, and full execution planning. If you find this useful, check it out.
 
 ---
 
