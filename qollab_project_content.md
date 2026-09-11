@@ -1,8 +1,8 @@
 # Calibration-Aware Hardware Ranking for Quantum Circuits
 
-Picking the right quantum backend matters more than most people realise. Different backends have different calibration states every day — qubits vary in readout fidelity, gate error, and coherence time. Sending a circuit to the wrong backend costs you fidelity before compilation even begins.
+Quantum backends change state daily. Readout fidelity, gate error, and coherence times are different today than they were yesterday, and picking the wrong backend costs you fidelity before a single gate runs.
 
-This project demonstrates **QAIP's execution intelligence**: a systematic way to analyze your circuit, classify what it demands from hardware, and recommend the best available backend using real calibration data — not static specs.
+This project shows how QAIP solves that: it reads your circuit, figures out what the circuit actually needs from hardware, and picks the best backend based on real calibration data pulled from hardware APIs.
 
 ---
 
@@ -10,9 +10,7 @@ This project demonstrates **QAIP's execution intelligence**: a systematic way to
 
 Say you have access to IonQ Aria 1 and Aria 2. Same hardware class. Same 25 qubits. Same all-to-all connectivity. How do you choose?
 
-Without calibration data, you can't. On the day we fetched calibration, Aria 1 had a degraded 1Q gate fidelity of **0.7913** — anomalously low, likely a maintenance state. Aria 2 was at **0.9997** — near-perfect. Same backend class, completely different execution quality.
-
-QAIP sees this. A naive selector doesn't.
+On the day we fetched calibration, Aria 1 had a 1Q gate fidelity of **0.7913**, which is anomalously low and consistent with a backend in a maintenance state. Aria 2 was at **0.9997**. Same backend class, very different results. Without calibration data, there is no way to see this before you submit.
 
 ---
 
@@ -22,14 +20,14 @@ Calibration snapshots pulled directly from real hardware APIs.
 
 ### IQM Sirius *(fetched 2026-07-06)*
 - 16 qubits, star topology via central resonator coupler
-- Per-qubit SSRO (state-space readout) fidelity — mean **0.9828**
-- Native MOVE gate enables qubit interactions through the resonator
+- Per-qubit SSRO (state-space readout) fidelity, mean **0.9828**
+- Native MOVE gate handles qubit interactions through the resonator
 - No T1/T2 in this snapshot format
 
 ### IonQ Aria 1 *(fetched 2026-09-09)*
 - 25 qubits, all-to-all connectivity
 - SPAM: 0.9953 · **1Q: 0.7913 (degraded)** · 2Q: 0.9862
-- T1: 100 seconds — trapped-ion coherence far exceeds superconducting
+- T1: 100 seconds (trapped-ion coherence is orders of magnitude longer than superconducting)
 
 ### IonQ Aria 2 *(fetched 2026-09-09)*
 - 25 qubits, all-to-all connectivity
@@ -38,16 +36,16 @@ Calibration snapshots pulled directly from real hardware APIs.
 
 ### IBM Boston *(Heron r3 architecture)*
 - 156 qubits, heavy-hex topology
-- Nearest-neighbor coupling — long-range interactions require SWAP insertion
+- Nearest-neighbor coupling; long-range interactions require SWAP insertion
 - Readout fidelity: 0.974 · T1: ~186 µs
 
 ---
 
-## The intelligence layer
+## How QAIP ranks backends
 
-QAIP does more than score hardware. Before ranking, it analyses the circuit itself.
+QAIP does not just score hardware in isolation. It reads the circuit first and adapts accordingly.
 
-### Step 1 — Circuit fingerprinting
+### Step 1: Circuit fingerprinting
 
 QAIP classifies every circuit by what it demands from hardware:
 
@@ -58,11 +56,11 @@ QAIP classifies every circuit by what it demands from hardware:
 | `TOPOLOGY_SENSITIVE` | entanglement ratio > 0.60 | connectivity match |
 | `WIDTH_CONSTRAINED` | circuit width > 15 qubits | qubit capacity |
 
-A Bell circuit (depth 3, entanglement ratio 0.33) is `READOUT_SENSITIVE`. A GHZ(5) circuit (entanglement ratio 0.80) is `TOPOLOGY_SENSITIVE`. The ranker adjusts accordingly.
+A Bell circuit (depth 3, entanglement ratio 0.33) is `READOUT_SENSITIVE`. A GHZ(5) circuit (entanglement ratio 0.80) is `TOPOLOGY_SENSITIVE`. The ranker adjusts its weights for each.
 
-### Step 2 — Adaptive weights
+### Step 2: Adaptive weights
 
-Fixed weights (70/20/10) treat every circuit the same. QAIP shifts weights based on the fingerprint:
+Static weights (70/20/10) treat every circuit the same. QAIP shifts them based on the fingerprint:
 
 | Fingerprint | Readout | Coherence | Topology | Capacity |
 |---|---|---|---|---|
@@ -71,7 +69,7 @@ Fixed weights (70/20/10) treat every circuit the same. QAIP shifts weights based
 | TOPOLOGY_SENSITIVE | 40% | 20% | 30% | 10% |
 | WIDTH_CONSTRAINED | 40% | 15% | 10% | 35% |
 
-### Step 3 — Four-component scoring
+### Step 3: Four-component scoring
 
 ```
 score = w_readout   × readout_quality
@@ -80,27 +78,27 @@ score = w_readout   × readout_quality
       + w_capacity  × capacity_fit
 ```
 
-**readout_quality** — mean health of the N best qubits (N = circuit width). IQM uses SSRO fidelity. IonQ blends SPAM + 1Q + 2Q gate fidelity. IBM uses readout error + T1/T2.
+**readout_quality**: mean health of the N best qubits (N = circuit width). IQM uses SSRO fidelity. IonQ blends SPAM, 1Q, and 2Q gate fidelity. IBM uses readout error and T1/T2.
 
-**coherence_margin** — T1 headroom above estimated circuit runtime. Matters for deep circuits; less relevant for shallow ones.
+**coherence_margin**: T1 headroom above estimated circuit runtime. Matters for deep circuits; less relevant for shallow ones.
 
-**topology_fit** — architecture-grounded connectivity score. IonQ all-to-all scores 1.00 for every circuit — zero routing overhead by design. IQM star scores 0.80–0.92 depending on entanglement demand. IBM heavy-hex scores 0.70–0.88 — long-range interactions require SWAP insertion, and QFT-class circuits are documented to inflate in depth even at maximum compiler optimization.
+**topology_fit**: architecture-grounded connectivity score based on published hardware specs. IonQ all-to-all scores 1.00 for every circuit because every qubit pair connects natively with zero routing overhead. IQM star scores 0.80–0.92 depending on entanglement demand. IBM heavy-hex scores 0.70–0.88 because long-range interactions require SWAP insertion, and QFT-class circuits are documented to inflate in depth even at maximum compiler optimization.
 
-**capacity_fit** — 1.0 if the backend has enough qubits; 0.0 if not. Hard fail.
+**capacity_fit**: 1.0 if the backend has enough qubits, 0.0 if not.
 
-### Step 4 — Confidence signal
+### Step 4: Confidence signal
 
-After ranking, QAIP outputs a confidence level based on the score gap between #1 and #2:
+After ranking, QAIP reports how confident it is based on the score gap between first and second place:
 
-- **HIGH** — gap > 0.025, top backend healthy
-- **MEDIUM** — gap > 0.010
-- **LOW** — close call, consider running both
+- **HIGH**: gap > 0.025, top backend is healthy
+- **MEDIUM**: gap > 0.010
+- **LOW**: close call, worth running both
 
 ---
 
 ## Results
 
-### Bell circuit — READOUT_SENSITIVE (depth 3, entanglement 0.33)
+### Bell circuit (READOUT_SENSITIVE, depth 3, entanglement 0.33)
 
 | Rank | Backend | Score | Readout | Coherence | Topology | Capacity |
 |------|---------|-------|---------|-----------|----------|----------|
@@ -111,21 +109,21 @@ After ranking, QAIP outputs a confidence level based on the score gap between #1
 
 Confidence: MEDIUM (gap +0.0190)
 
-Aria 2 wins on composite hardware quality. Aria 1 falls to last despite identical topology advantage — its degraded 1Q gate fidelity (0.79) pulls the composite health score down significantly.
+Aria 2 wins on composite hardware quality. Aria 1 falls to last despite the same topology advantage because its degraded 1Q gate fidelity (0.79) pulls the composite health score down to 0.9323.
 
-### Before / After — The value of QAIP
+### Before / after: the value of ranking
 
-Aria 1 and Aria 2 are indistinguishable without calibration data.
+Aria 1 and Aria 2 have identical specs on paper. There is no reason to prefer one over the other without calibration data.
 
 | Approach | Backend | Est. Bell fidelity |
 |---|---|---|
-| ✗ Without QAIP | IonQ Aria 1 | 77.3% |
-| ★ With QAIP | IonQ Aria 2 | 96.5% |
+| Without QAIP | IonQ Aria 1 | 77.3% |
+| With QAIP | IonQ Aria 2 | 96.5% |
 | **Improvement** | | **+19.1 percentage points** |
 
 Model: F = F_1Q × F_2Q × SPAM² (simplified product model)
 
-### Cross-backend hardware results (Bell · 1024 shots · pre-run)
+### Cross-backend hardware results (Bell, 1024 shots, pre-run)
 
 | Backend | \|00⟩ | \|11⟩ | \|01⟩ | \|10⟩ | Error | Source |
 |---|---|---|---|---|---|---|
@@ -137,7 +135,7 @@ Model: F = F_1Q × F_2Q × SPAM² (simplified product model)
 | IBM Miami sim | 511 | 462 | 22 | 29 | 5.0% | simulator |
 | Ideal | 512 | 512 | 0 | 0 | 0.0% | reference |
 
-IBM Miami shows 8× more error than IonQ Aria 2. Without calibration-aware ranking, there is no way to know this before submitting.
+IBM Miami shows 8x more error than IonQ Aria 2. Without ranking, you would not see this before submitting.
 
 ---
 
@@ -145,13 +143,13 @@ IBM Miami shows 8× more error than IonQ Aria 2. Without calibration-aware ranki
 
 The playground runs five steps:
 
-1. **Circuit intelligence** — fingerprints the Bell circuit, classifies it as `READOUT_SENSITIVE`, explains the reasoning, shows adapted weights
-2. **Calibration scan** — loads real IQM, IonQ Aria 1, IonQ Aria 2, and IBM Boston calibration; computes health and topology fit per backend
-3. **QAIP recommendation** — ranks all four backends using the four-component adaptive scoring formula; outputs confidence signal
-4. **Cross-backend comparison** — pre-run results table across six backends including one real hardware QPU run
-5. **Live run** — submits Bell circuit to your selected backend, returns real quantum counts, ranks your result against all pre-run backends
+1. **Circuit intelligence**: fingerprints the Bell circuit, classifies it as `READOUT_SENSITIVE`, explains the reasoning, shows adapted weights
+2. **Calibration scan**: loads real IQM, IonQ Aria 1, IonQ Aria 2, and IBM Boston calibration; computes health and topology fit per backend
+3. **QAIP recommendation**: ranks all four backends using the four-component adaptive scoring formula; outputs confidence signal
+4. **Cross-backend comparison**: pre-run results table across six backends including one real hardware QPU run
+5. **Live run**: submits Bell circuit to your selected backend, returns real quantum counts, ranks your result against all pre-run backends
 
-**Select any free simulator from the QPU dropdown** and hit Run. The live run section executes and shows where your backend lands in the field.
+Select any free simulator from the QPU dropdown and hit Run.
 
 ---
 
@@ -169,14 +167,8 @@ python qollab_project_code.py
 ```
 
 The repo includes:
-- `utils.py` — full library implementation with proper classes and adapters (~550 lines)
-- `qollab_project_code.py` — this Qollab script (self-contained, no local imports)
-- `data/iqm_sirius.json` — real IQM Sirius SSRO calibration
-- `data/ionq_aria_1.json` and `ionq_aria_2.json` — real IonQ calibration from the API
-- `scripts/fetch_ionq_calibration.py` — re-fetch fresh calibration from the IonQ API
-
----
-
-## About QAIP
-
-This project is one primitive in [QAIP](https://github.com/Rudra1x/QAIP), a larger execution intelligence layer for quantum circuits that builds on top of this ranking to also handle qubit mapping, routing cost estimation, and full execution strategy selection.
+- `utils.py`: full library implementation with classes and adapters (~550 lines)
+- `qollab_project_code.py`: this Qollab script (self-contained, no local imports)
+- `data/iqm_sirius.json`: real IQM Sirius SSRO calibration
+- `data/ionq_aria_1.json` and `ionq_aria_2.json`: real IonQ calibration from the API
+- `scripts/fetch_ionq_calibration.py`: re-fetch fresh calibration from the IonQ API
