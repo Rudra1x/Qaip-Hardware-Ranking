@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QAIP Hardware Ranking</title>
+<meta name="description" content="Calibration-aware quantum backend ranking. Pick the right hardware before you run a single shot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAFA;
+  --card:#FFFFFF;
+  --card-hi:#F9FAFB;
+  --bd:#E5E7EB;
+  --bd-hi:#D1D5DB;
+  --ac:#4F6EF7;
+  --ac-lo:rgba(79,110,247,.08);
+  --ac-bd:rgba(79,110,247,.22);
+  --gr:#16A34A;
+  --gr-lo:rgba(22,163,74,.06);
+  --gr-bd:rgba(22,163,74,.25);
+  --rd:#DC2626;
+  --rd-lo:rgba(220,38,38,.06);
+  --rd-bd:rgba(220,38,38,.2);
+  --am:#D97706;
+  --am-lo:rgba(217,119,6,.07);
+  --am-bd:rgba(217,119,6,.2);
+  --t1:#111827;
+  --t2:#6B7280;
+  --t3:#9CA3AF;
+  --fn:'Geist',system-ui,sans-serif;
+  --mo:'Geist Mono','JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:54px}
+.nav-brand{font-size:14px;font-weight:600;letter-spacing:-.02em;color:var(--t1);text-decoration:none}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-btn{font-size:12px;color:var(--t2);background:none;border:1px solid var(--bd);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:var(--fn);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:border-color .15s,color .15s}
+.nav-btn:hover{border-color:var(--bd-hi);color:var(--t1)}
+.nav-btn.accent{color:var(--ac);background:var(--ac-lo);border-color:var(--ac-bd)}
+.nav-btn.accent:hover{background:rgba(79,110,247,.13)}
+.nav-btn.qaip{color:var(--t1);font-weight:500;background:var(--card);border-color:var(--bd)}
+.nav-btn.qaip:hover{background:var(--card-hi);border-color:var(--bd-hi)}
+
+/* HERO */
+.hero{max-width:760px;margin:0 auto;padding:52px 40px 36px;text-align:center}
+.hero h1{font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-bottom:14px}
+.hero h1 em{font-style:normal;color:var(--ac)}
+.hero-sub{font-size:15px;color:var(--t2);font-weight:300;line-height:1.6;max-width:500px;margin:0 auto 28px}
+.preset-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.preset-btn{font-family:var(--mo);font-size:12px;color:var(--t2);background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:8px 16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.preset-btn:hover,.preset-btn.active{border-color:var(--ac);color:var(--ac);background:var(--ac-lo)}
+
+/* GRID */
+.main{max-width:1140px;margin:0 auto;padding:0 40px 72px;display:grid;grid-template-columns:268px 1fr;gap:20px;align-items:start}
+
+/* SIDEBAR */
+.sidebar{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:22px;position:sticky;top:70px}
+.panel-label{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px}
+.input-group{margin-bottom:16px}
+.input-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.input-label{font-size:13px;color:var(--t2)}
+.input-val{font-family:var(--mo);font-size:13px;color:var(--t1);font-weight:500}
+input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--bd);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ac);border:2px solid var(--card);cursor:pointer;transition:transform .1s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ac);border:2px solid var(--card);cursor:pointer}
+.divider{height:1px;background:var(--bd);margin:18px 0}
+.fp-card{background:var(--card-hi);border:1px solid var(--bd);border-radius:8px;padding:14px}
+.fp-type{font-family:var(--mo);font-size:11px;font-weight:500;color:var(--ac);letter-spacing:.04em;margin-bottom:6px}
+.fp-reason{font-size:12px;color:var(--t2);line-height:1.55;margin-bottom:10px}
+.weight-pills{display:flex;flex-wrap:wrap;gap:5px}
+.wpill{font-family:var(--mo);font-size:10px;color:var(--t3);border:1px solid var(--bd);border-radius:4px;padding:2px 7px;background:var(--card)}
+.wpill span{color:var(--t2)}
+
+/* RANKING */
+.ranking{display:flex;flex-direction:column;gap:10px}
+.backend-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px 22px;transition:border-color .2s}
+.backend-card.top{border-color:var(--gr-bd);background:linear-gradient(160deg,rgba(22,163,74,.03) 0%,var(--card) 55%)}
+.backend-card.deg{border-color:var(--rd-bd)}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.rank-badge{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mo);font-size:11px;font-weight:500;flex-shrink:0;border:1px solid var(--bd);color:var(--t2);background:var(--card-hi)}
+.rank-badge.top{background:var(--gr-lo);color:var(--gr);border-color:var(--gr-bd)}
+.backend-name{font-size:15px;font-weight:600;letter-spacing:-.02em}
+.provider-tag{font-family:var(--mo);font-size:10px;color:var(--t3);background:var(--card-hi);border:1px solid var(--bd);border-radius:3px;padding:2px 6px;margin-left:5px}
+.deg-tag{font-family:var(--mo);font-size:10px;color:var(--rd);background:var(--rd-lo);border:1px solid var(--rd-bd);border-radius:3px;padding:2px 6px;margin-left:4px}
+.score-main{font-family:var(--mo);font-size:20px;font-weight:500;margin-left:auto;color:var(--t1)}
+.score-main.top{color:var(--gr)}
+.score-main.deg{color:var(--t2)}
+.score-bars{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:grid;grid-template-columns:88px 1fr 56px;align-items:center;gap:12px}
+.bar-label{font-size:12px;color:var(--t2)}
+.bar-track{height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;background:var(--ac);transition:width .35s cubic-bezier(.25,.46,.45,.94)}
+.bar-fill.red{background:var(--rd)}
+.bar-fill.green{background:var(--gr)}
+.bar-val{font-family:var(--mo);font-size:11px;color:var(--t2);text-align:right}
+
+/* SECTIONS */
+.section{max-width:1140px;margin:0 auto;padding:0 40px 64px}
+.section-title{font-size:18px;font-weight:600;letter-spacing:-.02em;margin-bottom:18px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:22px}
+.card-label{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.explain-text{font-size:14px;color:var(--t2);line-height:1.65}
+.explain-text strong{color:var(--t1);font-weight:500}
+.conf-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mo);font-size:11px;border-radius:5px;padding:4px 10px;margin-top:12px}
+.conf-HIGH{background:var(--gr-lo);color:var(--gr);border:1px solid var(--gr-bd)}
+.conf-MEDIUM{background:var(--am-lo);color:var(--am);border:1px solid var(--am-bd)}
+.conf-LOW{background:var(--rd-lo);color:var(--rd);border:1px solid var(--rd-bd)}
+.ba-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--bd);border-radius:7px;margin-bottom:7px}
+.ba-row.winner{border-color:var(--gr-bd);background:var(--gr-lo)}
+.ba-label{font-size:13px;color:var(--t2)}
+.ba-score{font-family:var(--mo);font-size:14px;font-weight:500}
+.ba-gain{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--gr-lo);border:1px solid var(--gr-bd);border-radius:7px;margin-top:10px}
+.ba-gain-label{font-size:13px;color:var(--t2)}
+.ba-gain-val{font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--gr)}
+.ba-note{font-size:11px;color:var(--t3);font-family:var(--mo);margin-top:8px}
+
+/* CAL TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:11px 18px;border-bottom:1px solid var(--bd)}
+td{padding:13px 18px;border-bottom:1px solid var(--bd);color:var(--t2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+td:first-child{color:var(--t1);font-weight:500}
+.mono{font-family:var(--mo);font-size:12px}
+.health-cell{display:flex;align-items:center;gap:10px}
+.h-track{flex:1;height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.h-fill{height:100%;border-radius:2px;background:var(--ac)}
+.src-tag{font-family:var(--mo);font-size:10px;color:var(--t3);background:var(--card-hi);border:1px solid var(--bd);border-radius:4px;padding:2px 7px}
+.deg-dot{font-family:var(--mo);font-size:10px;color:var(--rd);background:var(--rd-lo);border:1px solid var(--rd-bd);border-radius:4px;padding:2px 7px;margin-left:6px}
+
+/* RESULTS */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.result-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.result-card.pick{border-color:var(--gr-bd);background:linear-gradient(145deg,rgba(22,163,74,.03),var(--card))}
+.result-name{font-size:12px;color:var(--t2);margin-bottom:11px}
+.result-name strong{color:var(--t1);font-size:13px;font-weight:600;display:block;margin-bottom:2px}
+.result-counts{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:9px}
+.r-state .lbl{font-size:10px;color:var(--t3);font-family:var(--mo)}
+.r-state .val{font-family:var(--mo);font-size:12px;font-weight:500;color:var(--t1)}
+.r-error{display:flex;justify-content:space-between;font-family:var(--mo);font-size:11px;padding:5px 8px;border-radius:5px;background:var(--card-hi);border:1px solid var(--bd)}
+.err-good{color:var(--gr)}.err-mid{color:var(--am)}.err-bad{color:var(--rd)}
+.hw-tag{font-family:var(--mo);font-size:9px;color:var(--ac);background:var(--ac-lo);border:1px solid var(--ac-bd);border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-block}
+
+/* FOOTER */
+footer{border-top:1px solid var(--bd);padding:24px 40px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--t3)}
+.footer-brand{font-weight:600;font-size:13px;color:var(--t2)}
+.footer-links{display:flex;gap:16px}
+.footer-links a{color:var(--t3);text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:var(--t1)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--card);border:1px solid var(--bd);border-radius:14px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;padding:32px;position:relative;transform:translateY(12px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border:1px solid var(--bd);border-radius:6px;background:none;cursor:pointer;font-size:16px;color:var(--t2);display:flex;align-items:center;justify-content:center;font-family:var(--fn);transition:background .15s,color .15s}
+.modal-close:hover{background:var(--card-hi);color:var(--t1)}
+.modal h2{font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--t2);margin-bottom:24px}
+.modal-section{margin-bottom:22px}
+.modal-section h3{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px}
+.modal-section p{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:8px}
+.step-list{display:flex;flex-direction:column;gap:8px}
+.step-item{display:flex;gap:12px;align-items:flex-start}
+.step-num{font-family:var(--mo);font-size:11px;font-weight:500;color:var(--ac);background:var(--ac-lo);border:1px solid var(--ac-bd);border-radius:4px;padding:2px 7px;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--t2);line-height:1.55}
+.step-text strong{color:var(--t1);font-weight:500}
+.code-block{background:#F3F4F6;border:1px solid var(--bd);border-radius:7px;padding:14px 16px;font-family:var(--mo);font-size:12px;color:var(--t2);line-height:1.7;margin-top:10px}
+.ckw{color:#6366F1}.cfn{color:var(--gr)}.cst{color:var(--am)}
+.modal-ctas{display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--bd)}
+.modal-cta{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:500;padding:10px 16px;border-radius:7px;text-decoration:none;transition:background .15s}
+.modal-cta.primary{background:var(--ac);color:#fff}
+.modal-cta.primary:hover{background:#3D5CE5}
+.modal-cta.secondary{background:var(--card-hi);color:var(--t1);border:1px solid var(--bd)}
+.modal-cta.secondary:hover{background:var(--bd)}
+
+/* RESPONSIVE */
+@media(max-width:820px){
+  nav{padding:0 20px}
+  .hero{padding:40px 20px 28px}
+  .main{grid-template-columns:1fr;padding:0 20px 56px}
+  .sidebar{position:static}
+  .section{padding:0 20px 48px}
+  .two-col{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:10px;text-align:center;padding:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>What is QAIP?</h2>
+    <div class="modal-sub">Quantum-Aware Intelligence and Planning. An execution intelligence layer for quantum circuits.</div>
+
+    <div class="modal-section">
+      <h3>The problem it solves</h3>
+      <p>Choosing a quantum backend is not obvious. Two backends can have identical specs on paper: same qubit count, same architecture, yet produce completely different results depending on their calibration state that day.</p>
+      <p>Without calibration data, you're guessing. With QAIP, the right backend is chosen automatically, every time.</p>
+    </div>
+
+    <div class="modal-section">
+      <h3>How it works</h3>
+      <div class="step-list">
+        <div class="step-item"><span class="step-num">01</span><div class="step-text"><strong>Circuit fingerprinting</strong>: classifies your circuit by what it demands: readout quality, coherence time, or topology match.</div></div>
+        <div class="step-item"><span class="step-num">02</span><div class="step-text"><strong>Calibration scan</strong>: fetches live calibration from IQM, IonQ, and IBM hardware APIs. Real data, not static specs.</div></div>
+        <div class="step-item"><span class="step-num">03</span><div class="step-text"><strong>Adaptive scoring</strong>: weights shift based on circuit type. A shallow circuit weights readout at 70%. A globally-entangled circuit weights topology at 30%.</div></div>
+        <div class="step-item"><span class="step-num">04</span><div class="step-text"><strong>Backend ranking</strong>: scores all available backends across four dimensions: readout quality, coherence margin, topology fit, capacity.</div></div>
+        <div class="step-item"><span class="step-num">05</span><div class="step-text"><strong>Explanation</strong>: plain language reasoning for why the top backend was chosen, and a confidence signal.</div></div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h3>Beyond ranking</h3>
+      <p>This page demonstrates QAIP's calibration-aware ranking primitive. The full QAIP system also handles qubit mapping, routing cost estimation, and execution strategy selection.</p>
+      <div class="code-block">
+        <span class="ckw">from</span> qaip <span class="ckw">import</span> <span class="cfn">QuantumAdvisor</span><br>
+        advisor = <span class="cfn">QuantumAdvisor</span>()<br>
+        report  = advisor.<span class="cfn">analyze</span>(your_circuit)<br>
+        <span class="ckw">print</span>(report.<span class="cfn">summary</span>())
+      </div>
+    </div>
+
+    <div class="modal-ctas">
+      <a href="https://qollab.xyz" target="_blank" class="modal-cta primary">Try live on Qollab</a>
+      <a href="https://github.com/Rudra1x/qaip-hardware-ranking" target="_blank" class="modal-cta secondary">View on GitHub</a>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#">QAIP Hardware Ranking</a>
+  <div class="nav-links">
+    <button class="nav-btn qaip" onclick="openModal()">What is QAIP?</button>
+    <a class="nav-btn" href="https://github.com/Rudra1x/qaip-hardware-ranking" target="_blank">GitHub</a>
+    <a class="nav-btn accent" href="https://qollab.xyz" target="_blank">Try on Qollab</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Pick the right backend.<br><em>Before you run a single shot.</em></h1>
+  <p class="hero-sub">QAIP analyzes your circuit against live calibration data and ranks every available backend. Not by specs, by real hardware state.</p>
+  <div class="preset-row">
+    <button class="preset-btn active" onclick="loadPreset('bell',this)">Bell &nbsp;2q · d3</button>
+    <button class="preset-btn" onclick="loadPreset('ghz',this)">GHZ(5) &nbsp;5q · d6</button>
+    <button class="preset-btn" onclick="loadPreset('qft',this)">QFT(4) &nbsp;4q · d9</button>
+    <button class="preset-btn" onclick="loadPreset('vqe',this)">VQE &nbsp;4q · d25</button>
+    <button class="preset-btn" onclick="loadPreset('large',this)">Large &nbsp;20q · d8</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <aside class="sidebar">
+    <div class="panel-label">Circuit properties</div>
+    <div class="input-group">
+      <div class="input-row"><span class="input-label">Qubits</span><span class="input-val" id="v-q">2</span></div>
+      <input type="range" id="s-q" min="1" max="50" value="2" oninput="update()">
+    </div>
+    <div class="input-group">
+      <div class="input-row"><span class="input-label">Depth</span><span class="input-val" id="v-d">3</span></div>
+      <input type="range" id="s-d" min="1" max="80" value="3" oninput="update()">
+    </div>
+    <div class="input-group">
+      <div class="input-row"><span class="input-label">Two-qubit gates</span><span class="input-val" id="v-t">1</span></div>
+      <input type="range" id="s-t" min="0" max="60" value="1" oninput="update()">
+    </div>
+    <div class="input-group">
+      <div class="input-row"><span class="input-label">Total gates</span><span class="input-val" id="v-g">3</span></div>
+      <input type="range" id="s-g" min="1" max="100" value="3" oninput="update()">
+    </div>
+    <div class="divider"></div>
+    <div class="fp-card">
+      <div class="fp-type" id="fp-type">READOUT_SENSITIVE</div>
+      <div class="fp-reason" id="fp-reason">Shallow circuit. Readout fidelity determines the outcome.</div>
+      <div class="weight-pills" id="wp"></div>
+    </div>
+  </aside>
+  <div class="ranking" id="ranking"></div>
+</div>
+
+<!-- EXPLANATION -->
+<section class="section">
+  <div class="section-title">Why QAIP chose this backend</div>
+  <div class="two-col">
+    <div class="info-card">
+      <div class="card-label">Reasoning</div>
+      <div class="explain-text" id="explain-text"></div>
+      <div id="conf-badge"></div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Before / after</div>
+      <div id="before-after"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CALIBRATION -->
+<section class="section">
+  <div class="section-title">Calibration snapshot</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Backend</th><th>Provider</th><th>Qubits</th><th>Topology</th><th>Health score</th><th>Source</th></tr></thead>
+      <tbody id="cal-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- PRE-RUN -->
+<section class="section">
+  <div class="section-title">Hardware results · Bell · 1024 shots</div>
+  <p style="font-size:13px;color:var(--t2);margin-bottom:16px;">Pre-run across six backends on 2026-09-10 including one real QPU execution on IonQ Forte Enterprise 1.</p>
+  <div class="results-grid" id="results-grid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">QAIP Hardware Ranking</div>
+  <div class="footer-links">
+    <a href="https://github.com/Rudra1x/qaip-hardware-ranking" target="_blank">GitHub</a>
+    <a href="https://qollab.xyz" target="_blank">Qollab</a>
+  </div>
+  <div>MIT licensed · Real calibration data from IQM and IonQ APIs</div>
+</footer>
+
+<script>
+const BACKENDS={
+  iqm:{name:'IQM Sirius',provider:'IQM',num_qubits:16,topology:'star',fetched:'2026-07-06',
+    qubits:{QB1:[.98555],QB2:[.98080],QB3:[.98745],QB4:[.95910],QB5:[.98880],QB8:[.98055],
+    QB9:[.98505],QB10:[.98535],QB11:[.98400],QB13:[.98605],QB15:[.98815],QB17:[.98765],
+    QB19:[.98245],QB20:[.98350],QB21:[.98550],QB23:[.97460]},degraded:false},
+  aria1:{name:'IonQ Aria 1',provider:'IonQ',num_qubits:25,topology:'all-to-all',fetched:'2026-09-09',
+    spam:.9953,fidelity_1q:.7913,fidelity_2q:.9862,t1_s:100,t2_s:1.0,degraded:true},
+  aria2:{name:'IonQ Aria 2',provider:'IonQ',num_qubits:25,topology:'all-to-all',fetched:'2026-09-09',
+    spam:.9974,fidelity_1q:.9997,fidelity_2q:.9699,t1_s:10,t2_s:1.5,degraded:false},
+  ibm:{name:'IBM Boston',provider:'IBM',num_qubits:156,topology:'heavy-hex',fetched:'synthetic',
+    readout_fidelity:.974,t1_us:186,t2_us:112,degraded:false},
+};
+
+const TOPO_FIT={
+  'all-to-all':{READOUT_SENSITIVE:1,COHERENCE_SENSITIVE:1,TOPOLOGY_SENSITIVE:1,WIDTH_CONSTRAINED:1},
+  'star':       {READOUT_SENSITIVE:.92,COHERENCE_SENSITIVE:.88,TOPOLOGY_SENSITIVE:.80,WIDTH_CONSTRAINED:.85},
+  'heavy-hex':  {READOUT_SENSITIVE:.88,COHERENCE_SENSITIVE:.82,TOPOLOGY_SENSITIVE:.70,WIDTH_CONSTRAINED:.82},
+};
+
+const WEIGHTS={
+  READOUT_SENSITIVE:  {readout:.70,coherence:.15,topology:.05,capacity:.10},
+  COHERENCE_SENSITIVE:{readout:.40,coherence:.45,topology:.05,capacity:.10},
+  TOPOLOGY_SENSITIVE: {readout:.40,coherence:.20,topology:.30,capacity:.10},
+  WIDTH_CONSTRAINED:  {readout:.40,coherence:.15,topology:.10,capacity:.35},
+};
+
+const FP_REASONS={
+  READOUT_SENSITIVE:  'Shallow circuit with moderate entanglement. Coherence and topology are not binding constraints. Readout fidelity determines the outcome.',
+  COHERENCE_SENSITIVE:'Deep circuit: T1 headroom above circuit runtime is critical. Backends with longer coherence times score significantly higher.',
+  TOPOLOGY_SENSITIVE: 'High entanglement demands all-to-all or near-all-to-all connectivity. Sparse topologies (heavy-hex, star) incur routing overhead that inflates circuit depth and noise.',
+  WIDTH_CONSTRAINED:  'Circuit width exceeds some backends\' qubit counts. Capacity is the binding constraint: backends without enough qubits score 0.',
+};
+
+const PRERUN={
+  'IonQ Aria 2 sim':   {pick:true, '00':511,'11':501,'01':3, '10':9,  src:'simulator'},
+  'IonQ Forte sim':    {pick:false,'00':501,'11':515,'01':6, '10':2,  src:'simulator'},
+  'IonQ Forte QPU':    {pick:false,'00':487,'11':517,'01':11,'10':9,  src:'real hardware'},
+  'IonQ Aria 1 sim':   {pick:false,'00':508,'11':510,'01':1, '10':5,  src:'simulator'},
+  'IBM Boston sim':    {pick:false,'00':497,'11':512,'01':11,'10':4,  src:'simulator'},
+  'IBM Miami sim':     {pick:false,'00':511,'11':462,'01':22,'10':29, src:'simulator'},
+};
+
+function mean(a){return a.reduce((s,v)=>s+v,0)/a.length}
+function median(a){const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function r4(v){return Math.round(v*10000)/10000}
+
+function fingerprint(nq,d,tq,t){
+  const er=tq/Math.max(t,1),dpq=d/Math.max(nq,1);
+  if(nq>15)return'WIDTH_CONSTRAINED';
+  if(d>20||dpq>5)return'COHERENCE_SENSITIVE';
+  if(er>0.60)return'TOPOLOGY_SENSITIVE';
+  return'READOUT_SENSITIVE';
+}
+
+function healthArr(b){
+  if(b.provider==='IQM')return Object.values(b.qubits).map(v=>v[0]);
+  if(b.provider==='IonQ'){const c=.5*b.spam+.3*b.fidelity_1q+.2*b.fidelity_2q;return Array(b.num_qubits).fill(c)}
+  return Array(b.num_qubits).fill(b.readout_fidelity);
+}
+
+function healthScore(b){const v=healthArr(b);return r4(.6*median(v)+.4*mean(v))}
+
+function score(b,nq,d,type){
+  const w=WEIGHTS[type];
+  const hs=healthArr(b).sort((a,c)=>c-a).slice(0,nq);
+  const readout=mean(hs.length?hs:healthArr(b));
+  const t1s=b.t1_s||(b.t1_us?b.t1_us/1e6:null);
+  let coherence;
+  if(t1s){const m=(t1s*1e6)/Math.max(d*.05,.001);coherence=Math.min(1,Math.log10(Math.max(m,1))/2)}
+  else coherence=.90;
+  const topo=(TOPO_FIT[b.topology]||{})[type]??0.85;
+  const cap=b.num_qubits>=nq?1:0;
+  const sc=w.readout*readout+w.coherence*coherence+w.topology*topo+w.capacity*cap;
+  return{score:r4(sc),readout:r4(readout),coherence:r4(coherence),topo:r4(topo),cap};
+}
+
+function rankAll(nq,d,tq,t){
+  const type=fingerprint(nq,d,tq,t);
+  const rows=Object.entries(BACKENDS).map(([k,b])=>{const s=score(b,nq,d,type);return{k,b,...s}});
+  rows.sort((a,b)=>b.score-a.score);
+  return{type,rows};
+}
+
+function confidence(rows){
+  if(rows.length<2)return{level:'HIGH',reason:'Only one candidate'};
+  const gap=r4(rows[0].score-rows[1].score);
+  if(gap>.025&&!rows[0].b.degraded)return{level:'HIGH',reason:`Clear lead over #2, gap +${gap.toFixed(4)}`};
+  if(gap>.010)return{level:'MEDIUM',reason:`Moderate lead over #2, gap +${gap.toFixed(4)}`};
+  return{level:'LOW',reason:`Close call with #2, gap +${gap.toFixed(4)}. Consider running both.`};
+}
+
+function estFid(b){
+  if(b.provider==='IonQ')return r4(b.fidelity_1q*b.fidelity_2q*b.spam**2);
+  const h=healthArr(b).sort((a,c)=>c-a).slice(0,2);return r4(mean(h)**2);
+}
+
+function errPct(c){const e=c['01']+c['10'],t=c['00']+c['11']+e;return(e/Math.max(t,1)*100).toFixed(1)}
+
+function update(){
+  const nq=+document.getElementById('s-q').value;
+  const d= +document.getElementById('s-d').value;
+  const tq=+document.getElementById('s-t').value;
+  const t= +document.getElementById('s-g').value;
+  document.getElementById('v-q').textContent=nq;
+  document.getElementById('v-d').textContent=d;
+  document.getElementById('v-t').textContent=tq;
+  document.getElementById('v-g').textContent=t;
+  const{type,rows}=rankAll(nq,d,tq,t);
+  const w=WEIGHTS[type];
+
+  // fingerprint panel
+  document.getElementById('fp-type').textContent=type;
+  document.getElementById('fp-reason').textContent=FP_REASONS[type];
+  document.getElementById('wp').innerHTML=[
+    ['Readout',Math.round(w.readout*100)],['Coherence',Math.round(w.coherence*100)],
+    ['Topology',Math.round(w.topology*100)],['Capacity',Math.round(w.capacity*100)],
+  ].map(([l,v])=>`<span class="wpill">${l} <span>${v}%</span></span>`).join('');
+
+  // ranking cards
+  document.getElementById('ranking').innerHTML=rows.map((r,i)=>{
+    const isTop=i===0,isDeg=r.b.degraded;
+    const cls=isTop?'backend-card top':isDeg?'backend-card deg':'backend-card';
+    const bCls=isTop?'rank-badge top':'rank-badge';
+    const sCls=isTop?'score-main top':isDeg?'score-main deg':'score-main';
+    const bars=[
+      {label:'Readout',val:r.readout,pct:r.readout*100,cls:isTop?'bar-fill green':'bar-fill'},
+      {label:'Coherence',val:r.coherence,pct:r.coherence*100,cls:'bar-fill'},
+      {label:'Topology',val:r.topo,pct:r.topo*100,cls:'bar-fill'},
+      {label:'Capacity',val:r.cap,pct:r.cap*100,cls:'bar-fill'},
+    ];
+    if(isDeg)bars[0].cls='bar-fill red';
+    return`<div class="${cls}">
+      <div class="card-head">
+        <div class="${bCls}">${i+1}</div>
+        <div><span class="backend-name">${r.b.name}</span><span class="provider-tag">${r.b.provider}</span>${isDeg?'<span class="deg-tag">degraded</span>':''}</div>
+        <span class="${sCls}">${r.score.toFixed(4)}</span>
+      </div>
+      <div class="score-bars">${bars.map(b=>`
+        <div class="bar-row">
+          <span class="bar-label">${b.label}</span>
+          <div class="bar-track"><div class="${b.cls}" style="width:${b.pct.toFixed(2)}%"></div></div>
+          <span class="bar-val">${b.val.toFixed(4)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // explanation
+  const top=rows[0],conf=confidence(rows);
+  let ex=`<strong>${top.b.name}</strong> ranks first `;
+  if(type==='READOUT_SENSITIVE')ex+=`because this circuit is readout-sensitive and it has the highest composite hardware health (${top.readout.toFixed(4)}).`;
+  else if(type==='TOPOLOGY_SENSITIVE')ex+=`because this circuit's high entanglement ratio demands all-to-all connectivity. ${top.b.name} scores ${top.topo.toFixed(2)} for topology fit with zero routing overhead.`;
+  else if(type==='COHERENCE_SENSITIVE')ex+=`because this deep circuit needs T1 headroom. Its coherence margin is ${top.coherence.toFixed(4)}.`;
+  else ex+=`because this wide circuit needs ${nq} qubits. ${top.b.name} has ${top.b.num_qubits}, sufficient capacity with solid readout quality.`;
+  document.getElementById('explain-text').innerHTML=ex;
+  document.getElementById('conf-badge').innerHTML=`<div class="conf-badge conf-${conf.level}">${conf.level}: ${conf.reason}</div>`;
+
+  // before / after (always Aria1 vs Aria2)
+  const f1=estFid(BACKENDS.aria1),f2=estFid(BACKENDS.aria2);
+  const gain=((f2-f1)*100).toFixed(1);
+  document.getElementById('before-after').innerHTML=`
+    <div class="ba-row"><span class="ba-label">Without QAIP / IonQ Aria 1</span><span class="ba-score" style="color:var(--rd)">${(f1*100).toFixed(1)}%</span></div>
+    <div class="ba-row winner"><span class="ba-label">With QAIP / IonQ Aria 2</span><span class="ba-score" style="color:var(--gr)">${(f2*100).toFixed(1)}%</span></div>
+    <div class="ba-gain"><span class="ba-gain-label">Fidelity improvement</span><span class="ba-gain-val">+${gain} pp</span></div>
+    <div class="ba-note">Model: F = F_1Q × F_2Q × SPAM²</div>`;
+}
+
+const PRESETS={
+  bell: {q:2, d:3, tq:1, t:3},
+  ghz:  {q:5, d:6, tq:4, t:5},
+  qft:  {q:4, d:9, tq:8, t:12},
+  vqe:  {q:4, d:25,tq:8, t:16},
+  large:{q:20,d:8, tq:10,t:22},
+};
+
+function loadPreset(key,btn){
+  const p=PRESETS[key];
+  document.getElementById('s-q').value=p.q;
+  document.getElementById('s-d').value=p.d;
+  document.getElementById('s-t').value=p.tq;
+  document.getElementById('s-g').value=p.t;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  update();
+}
+
+function renderCal(){
+  document.getElementById('cal-tbody').innerHTML=Object.entries(BACKENDS).map(([,b])=>{
+    const h=healthScore(b),pct=(h*100).toFixed(1);
+    const deg=b.degraded?'<span class="deg-dot">degraded</span>':'';
+    return`<tr>
+      <td>${b.name}${deg}</td>
+      <td><span class="mono">${b.provider}</span></td>
+      <td><span class="mono">${b.num_qubits}</span></td>
+      <td><span class="mono">${b.topology}</span></td>
+      <td><div class="health-cell"><div class="h-track"><div class="h-fill" style="width:${pct}%"></div></div><span class="mono">${h.toFixed(4)}</span></div></td>
+      <td><span class="src-tag">${b.fetched==='synthetic'?'synthetic':'real API'}</span><span class="mono" style="font-size:11px;color:var(--t3);margin-left:6px">${b.fetched}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPrerun(){
+  document.getElementById('results-grid').innerHTML=Object.entries(PRERUN).map(([name,c])=>{
+    const err=parseFloat(errPct(c));
+    const errCls=err<1?'err-good':err<2.5?'err-mid':'err-bad';
+    const hw=c.src==='real hardware';
+    return`<div class="result-card ${c.pick?'pick':''}">
+      <div class="result-name"><strong>${name}${c.pick?' ★':''}</strong>${hw?'<span class="hw-tag">real QPU</span>':''}</div>
+      <div class="result-counts">
+        <div class="r-state"><div class="lbl">|00⟩</div><div class="val">${c['00']}</div></div>
+        <div class="r-state"><div class="lbl">|11⟩</div><div class="val">${c['11']}</div></div>
+        <div class="r-state"><div class="lbl">|01⟩</div><div class="val">${c['01']}</div></div>
+        <div class="r-state"><div class="lbl">|10⟩</div><div class="val">${c['10']}</div></div>
+      </div>
+      <div class="r-error"><span>Error</span><span class="${errCls}">${err}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+renderCal();
+renderPrerun();
+update();
+</script>
+</body>
+</html>
