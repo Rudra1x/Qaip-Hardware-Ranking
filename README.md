@@ -1,27 +1,24 @@
-# Qaip-Hardware-Ranking
+# QAIP Hardware Ranking
 
-# Calibration-Aware Hardware Ranking for Quantum Circuits
+Calibration-aware hardware intelligence for quantum circuits — a Qollab Track 1 project.
 
-A self-contained Qollab notebook that shows how to pick the right quantum backend for your circuit using live calibration data — not just qubit counts or static specs.
-
-MIT-licensed. Runs one-click on [qollab.xyz](https://qollab.xyz).
+MIT-licensed · [Live on Qollab](https://qollab.xyz)
 
 ---
 
-## What this notebook teaches
+## What this project demonstrates
 
 Different quantum backends have different calibration states every day. Readout fidelity, gate error, and coherence times all vary — and picking the wrong backend costs you fidelity before compilation even starts.
 
-This notebook walks through one complete idea end to end:
+QAIP analyzes your circuit, classifies what it demands from hardware, and recommends the best backend using real calibration data. Not static specs. Not queue depth. Real calibration.
 
-1. **Load calibration data** from IQM, IBM, and IonQ backends using a provider-agnostic adapter pattern
-2. **Compute per-qubit health scores** from readout fidelity, gate fidelity, and coherence metrics
-3. **Score and rank backends** for a given circuit using a transparent scoring formula
-4. **Visualize** the hardware topology with per-qubit health as color
-5. **Explain the ranking** in plain language — which backend won and why
-6. **Run the top-ranked circuit** on real IonQ hardware through the Qollab playground
+Five steps, end to end:
 
-Three worked circuits (Bell, GHZ(5), QFT(4)) and a bring-your-own-circuit section are included.
+1. **Circuit intelligence** — fingerprint the circuit, classify its primary hardware sensitivity, adapt scoring weights accordingly
+2. **Calibration scan** — load real IQM, IonQ, and IBM calibration; compute per-qubit health and topology fit per backend
+3. **QAIP recommendation** — rank all backends using four-component adaptive scoring; output confidence signal
+4. **Cross-backend comparison** — pre-run results across six backends including a real IonQ QPU run
+5. **Live run** — submit your circuit to the selected backend, see real quantum counts, rank your result against the field
 
 ---
 
@@ -29,42 +26,43 @@ Three worked circuits (Bell, GHZ(5), QFT(4)) and a bring-your-own-circuit sectio
 
 ```
 qaip-hardware-ranking/
-├── notebook.ipynb              # Qollab notebook — one-click runnable
-├── utils.py                    # self-contained implementation (~600 lines)
+├── qollab_project_code.py      # Qollab playground script (self-contained)
+├── utils.py                    # full library implementation (~550 lines)
 ├── requirements.txt
+├── DECISIONS.md                # key design decisions and project history
 ├── data/
 │   ├── iqm_sirius.json         # real IQM Sirius SSRO calibration
-│   ├── ibm_kolkata_fake.json   # synthetic IBM 27q calibration
 │   ├── ionq_aria_1.json        # real IonQ Aria 1 calibration
 │   ├── ionq_aria_2.json        # real IonQ Aria 2 calibration
 │   └── ionq_forte_1.json       # real IonQ Forte 1 calibration
 ├── scripts/
-│   └── fetch_ionq_calibration.py   # pulls fresh IonQ calibration from API
+│   └── fetch_ionq_calibration.py  # re-fetch calibration from IonQ API
 ├── LICENSE
 └── README.md
 ```
 
+---
+
 ## Running locally
 
 ```bash
+git clone https://github.com/Rudra1x/qaip-hardware-ranking
+cd qaip-hardware-ranking
 pip install -r requirements.txt
-jupyter notebook notebook.ipynb
+python qollab_project_code.py
 ```
-
-No credentials needed for ranking and visualization cells. The hardware run cell uses your Qollab account.
 
 ---
 
 ## Quickstart
 
 ```python
-from utils import IQMAdapter, IBMAdapter, IonQAdapter
-from utils import rank_backends, print_ranking_table, explain_ranking
+from utils import IQMAdapter, IonQAdapter
+from utils import rank_backends, print_ranking_table
 from qiskit import QuantumCircuit
 
-# Load calibration snapshots
+# Load real calibration snapshots
 iqm   = IQMAdapter.load("data/iqm_sirius.json")
-ibm   = IBMAdapter.load("data/ibm_kolkata_fake.json")
 aria2 = IonQAdapter.load("data/ionq_aria_2.json")
 
 # Define your circuit
@@ -75,35 +73,68 @@ qc.cx(1, 2)
 qc.cx(2, 3)
 qc.measure_all()
 
-# Rank and explain
-results = rank_backends([iqm, ibm, aria2], qc)
+# Rank
+results = rank_backends([iqm, aria2], qc)
 print_ranking_table(results)
-print(explain_ranking(results))
 ```
 
 ---
 
-## The scoring function
+## The intelligence layer
+
+### Circuit fingerprinting
+
+Before scoring hardware, QAIP classifies the circuit:
+
+| Fingerprint | Signal | Bottleneck |
+|---|---|---|
+| `READOUT_SENSITIVE` | entanglement ratio ≤ 0.60 | readout fidelity |
+| `COHERENCE_SENSITIVE` | depth > 20 | coherence time |
+| `TOPOLOGY_SENSITIVE` | entanglement ratio > 0.60 | connectivity match |
+| `WIDTH_CONSTRAINED` | width > 15 qubits | qubit capacity |
+
+### Adaptive scoring
 
 ```
-score = 0.70 × readout_quality
-      + 0.20 × coherence_margin
-      + 0.10 × capacity_fit
+score = w_readout   × readout_quality
+      + w_coherence × coherence_margin
+      + w_topology  × topology_fit
+      + w_capacity  × capacity_fit
 ```
 
-**readout_quality** — mean health of the N best qubits (N = circuit width). For IQM: derived from SSRO fidelity. For IBM: readout error + T1/T2. For IonQ: composite of SPAM, 1Q gate fidelity, and 2Q gate fidelity.
+Weights shift per fingerprint. A `TOPOLOGY_SENSITIVE` circuit allocates 30% weight to topology fit. A `READOUT_SENSITIVE` circuit allocates 70% to readout quality.
 
-**coherence_margin** — T1 relative to estimated circuit runtime. Backends with longer coherence times score higher for deeper circuits.
+### Topology fit (architecture-grounded)
 
-**capacity_fit** — 1.0 if the backend has enough qubits; 0.0 if not. Hard fail.
+| Backend | Fit score | Reason |
+|---|---|---|
+| IonQ all-to-all | 1.00 | zero routing overhead — any qubit pair connects natively |
+| IQM star | 0.80–0.92 | MOVE gate overhead for non-adjacent pairs |
+| IBM heavy-hex | 0.70–0.88 | SWAP insertion required; QFT-class circuits inflate in depth |
 
-Weights are named constants (`DEFAULT_WEIGHTS` in `utils.py`) — easy to adjust. No learned parameters.
+---
+
+## Real calibration data
+
+| Backend | Source | Date |
+|---|---|---|
+| IQM Sirius | IQM hardware API (real) | 2026-07-06 |
+| IonQ Aria 1 | IonQ REST API (real) | 2026-09-09 |
+| IonQ Aria 2 | IonQ REST API (real) | 2026-09-09 |
+| IonQ Forte 1 | IonQ REST API (real) | 2026-09-09 |
+
+To re-fetch fresh IonQ calibration:
+
+```bash
+export IONQ_API_KEY="your-key"
+python scripts/fetch_ionq_calibration.py
+```
 
 ---
 
 ## About QAIP
 
-This notebook is part of a larger project, [QAIP](https://github.com/[your-org]/QAIP), which builds on top of this ranking primitive to also handle qubit mapping, routing, and full execution planning. If you find this useful, check it out.
+This project is one primitive in [QAIP](https://github.com/Rudra1x/QAIP), a larger execution intelligence layer for quantum circuits that builds on top of this ranking to also handle qubit mapping, routing cost estimation, and full execution strategy selection.
 
 ---
 
